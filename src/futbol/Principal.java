@@ -5,11 +5,10 @@
  */
 package futbol;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.*;
+import conexionbd.ConexionSql;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -17,130 +16,113 @@ import javax.swing.JOptionPane;
  */
 public class Principal {
 
-    static final String JDBC_DRIVER = "org.h2.Driver";
-    static final String DB_URL = "jdbc:h2:~/test";
+    private static final ConexionSql bd = new ConexionSql();
 
-    //  Database credentials
-    static final String USER = "sa";
-    static final String PASS = "";
+    public static void main(String[] args) {
 
-    // JDBC driver name and database URL
-    public static void main(String[] args) throws IOException {
-        Connection conn = null;
-        Statement stmt = null;
         Scanner sc = new Scanner(System.in);
-        Scanner texto = new Scanner(System.in);
-        Torneo agenda = new Torneo("Clown Cup");
-        String nombre, nombreDirectorTecnico, color, dni, calle, localidad, fecha, tipo;
-        long t;
-        int altura, num, opcion, dniDirectorTecnico, torneosDt;
-        try {
-            Class.forName(JDBC_DRIVER);
-            System.out.println("Connecting to database...");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            System.out.println("Creating table in given database...");
-            stmt = conn.createStatement();
-            String sql = "CREATE TABLE JUGADOR "
-                    + "(id_jugador int IDENTITY(1,1), "
-                    + " nombre_completo VARCHAR(255), "
-                    + " dni INTEGER, "
-                    + " numero INTEGER, "
-                    + " posicion VARCHAR(3), "
-                    + " PRIMARY KEY ( id_jugador ))"
-                    + "INSERT INTO PERSONA VALUES ('', 'PEDRO', 'PEREZ', 67)";
-            //stmt.executeUpdate(sql);
-            stmt.close();
-            conn.close();
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        } finally {
-            //finally block used to close resources
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                } else {
-
-                }
-            } catch (SQLException se2) {
-            } // nothing we can do
-            try {
-                if (conn != null) {
-                    conn.close();
-                } else {
-
-                }
-            } catch (SQLException se) {
-                se.printStackTrace();
-            } //end finally try
-        }
+        List<Partido> encuentros = new ArrayList<>();
+        Torneo torneo = new Torneo("Clown Cup");
+        String nombre, nombreEquipo, color, posicion;
+        int opcion, id_jugador = 0, dni, numeroCamiseta, torneosDt;
 
         do {
+            
             System.out.println("Opciones:");
-            System.out.println("\t1) Inscribir Equipos");
-            System.out.println("\t9) Salir de la agenda");
+            System.out.println("\t1) Inscribir Jugador (se necesitan al menos 10)");
+            System.out.println("\t2) Generar Equipos (se necesitan minimo 2)");
+            System.out.println("\t3) Generar proximos Encuentros");
+            System.out.println("\t4) Jugar Partidos");
+            System.out.println("\t5) Obtener Tabla de posiciones");
+            System.out.println("\t9) Finalizar Torneo");
             System.out.print("Ingrese opcion: ");
             opcion = sc.nextInt();
             switch (opcion) {
                 case 1:
+                    Jugador jugador = null;
+                    
+                    System.out.println("Nuevo jugador");
+                    System.out.println("Ingrese el nombre y apellido del jugador");
+                    nombre = sc.next();
+                    System.out.println("Ingreser Dni del jugador");
+                    dni = sc.nextInt();
+                    System.out.println("Ingrese numero de camiseta");
+                    numeroCamiseta = sc.nextInt();
+                    System.out.println("Ingrese posicion (DEL, ARQ, DEF )");
+                    posicion = sc.next();
+                    id_jugador += 1;
+                    jugador = new Jugador(id_jugador, nombre, dni, numeroCamiseta, posicion);
+                    bd.cargarJugador(jugador);
+                    break;
+                case 2:
                     System.out.println("Nuevo Equipo");
                     System.out.println("Ingrese el nombre del Equipo: ");
-                    nombre = sc.next();
+                    nombreEquipo = sc.next();
                     System.out.println("Ingrese el color del Equipo: ");
                     color = sc.next();
                     System.out.println("Ingrese el nombre completo del director tecnico: ");
-                    nombreDirectorTecnico = sc.next();
+                    nombre = sc.next();
                     System.out.println("Ingrese el DNI director tecnico: ");
-                    dniDirectorTecnico = sc.nextInt();
+                    dni = sc.nextInt();
                     System.out.println("Cuantos torneos gano? ");
                     torneosDt = sc.nextInt();
-                    DirectorTecnico dt = new DirectorTecnico(nombre, dniDirectorTecnico, torneosDt);
-                    try {
-                        Class.forName(JDBC_DRIVER);
-                        System.out.println("Connecting to database...");
-                        conn = DriverManager.getConnection(DB_URL, USER, PASS);
-                        System.out.println("Creating table in given database...");
-                        stmt = conn.createStatement();
-                        String sql = "CREATE TABLE JUGADOR "
-                                + "(id_jugador INTEGER not NULL, "
-                                + " nombre_completo VARCHAR(255), "
-                                + " dni INTEGER, "
-                                + " numero INTEGER, "
-                                + " posicion VARCHAR(3), "
-                                + " PRIMARY KEY ( id_jugador ))";
-
-                        stmt.close();
-                        conn.close();
-                    } catch (SQLException se) {
-                        //Handle errors for JDBC
-                        se.printStackTrace();
-                    } catch (Exception e) {
-                        //Handle errors for Class.forName
-                        e.printStackTrace();
-                    } finally {
-                        //finally block used to close resources
-                        try {
-                            if (stmt != null) {
-                                stmt.close();
-                            } else {
-
-                            }
-                        } catch (SQLException se2) {
-                        } // nothing we can do
-                        try {
-                            if (conn != null) {
-                                conn.close();
-                            } else {
-
-                            }
-                        } catch (SQLException se) {
-                            se.printStackTrace();
-                        } //end finally try
+                    List<Jugador> plantilla = new ArrayList<>();
+                    for (int i = 0; i < 5; i++) {
+                        System.out.println("Ingrese el id del jugador (1,2,3...");
+                        id_jugador = sc.nextInt();
+                        plantilla.add(bd.obtenerJugador(id_jugador));
                     }
-                    Equipo equipo = new Equipo(nombre, color, dt, plantilla);
+                    System.out.println("");
+                    DirectorTecnico dt = new DirectorTecnico(nombre, dni, torneosDt);
+                    Equipo equipo = new Equipo(nombreEquipo, color, dt, plantilla);
+                    torneo.agregarEquipo(equipo);
+                    break;
+                case 3:
+                    if (!(torneo.getEquipos().size() % 2 == 0)) {
+                        System.out.println("No hay suficientes equipos, por favor anote mas esuqipos antes de continuar");
+                        break;
+                    }
+                    encuentros = torneo.encuentros();
+                    System.out.println("Los proximos encuentros son: ");
+                    for (Partido partido : encuentros) {
+                        System.out.println(partido);
+                    }
+                    break;
+                case 4:
+                    if (!(torneo.getEquipos().size() % 2 == 0)) {
+                        System.out.println("No hay suficientes equipos, por favor anote mas esuqipos antes de continuar");
+                        break;
+                    }
+                    for (Partido partido : encuentros) {
+                        System.out.println(partido);
+                        while (partido.getDisputado()) {
+                            System.out.println("Ingrese numero 1 o 2 \n1: gol local \n2: gol visitante");
+                            int aux = sc.nextInt();
+                            if (aux < 1 || aux > 2) {
+                                System.out.println("Solo 1 y 2 se puede ingresar");
+                                break;
+                            }
+                            if (aux == 1) {
+                                partido.haceGolLocal();
+                            } else {
+                                partido.haceGolVisitante();
+                            }
+                            System.out.println("Si termino el partido ingrese 9 si no presione 0");
+                            aux = sc.nextInt();
+                            if (aux == 9) {
+                                partido.setDisputado();
+                            }
+                        }
+                    }
+                    torneo.orden();
+                    break;
+                case 5:
+                    System.out.println("Tabala de posiciones");
+                    System.out.println(torneo.getEquipos());
+                    break;
+                case 9:
+                    System.out.println("Fin del torneo");
+                    System.out.println(torneo);
                 default:
                     System.out.println("Opcion invalida");
                     break;
